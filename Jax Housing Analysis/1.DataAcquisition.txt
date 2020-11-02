@@ -1,0 +1,7 @@
+I acquired the data for this project from the City of Jacksonville, which makes it available here: https://www.coj.net/departments/property-appraiser/information-offerings.
+
+The data I used is the uncertified tax roll as of September. I downloaded it in csv form, then uploaded the 17 csv files as separate tables in a SQL file.
+
+I then wrote a SQL query to combine the tables and filter them down to only properties with single-family residences that have sold within the last three years. That SQL query is available in this repository.
+
+I then eliminated nulls, fixed datatypes and dropped empty columns in a python file that is also available in this repository, as is the final csv.
