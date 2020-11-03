@@ -9,6 +9,8 @@ SELECT
 	building, type_descr, style, class, quality, yr_built, perc_complete, bldng_value, heated_sf,
 	/* Restated Sale table columns */
 	trans_id, seller, (year||'-'||month||'-'||day) AS sale_date, price,
+	/* Room columns */
+	baths, bedrooms, rooms, stories,
 	/* Columns from Feature table */
 	boat_cv, boatcv_avg_grade, boatcv_avg_ppu, boatcv_avg_yr_built, boatcv_total_depreciated,
 	carport_ft, carportft_avg_grade, carportft_avg_ppu, carportft_avg_yr_built, carportft_total_depreciated,
@@ -74,6 +76,29 @@ FROM
 		/* Filter Sale table to remove deed transfers and sales of vacant land */
 		improved = 'I' AND price > 1000
 	GROUP BY RE, sale_date) AS sales_query
+LEFT JOIN
+				/* Utility subquery */
+				(
+				SELECT  RE, SUM(baths) AS baths, SUM(bedrooms) AS bedrooms, SUM(stories) AS stories, SUM(rooms) AS rooms
+				FROM 
+					(
+					SELECT	RE,
+							CASE WHEN structure_descr = 'Baths' THEN unit_count
+								ELSE 0 END AS baths,
+							CASE WHEN structure_descr = 'Bedrooms' THEN unit_count
+								ELSE 0 END AS bedrooms,
+							CASE WHEN structure_descr = 'Stories' THEN unit_count
+								ELSE 0 END AS stories,
+							CASE WHEN structure_descr = 'Rooms / Units' THEN unit_count
+								ELSE 0 END AS rooms
+					FROM Parcel
+					LEFT JOIN Utility
+					USING (RE)
+					WHERE (property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 800 OR property_use = 810 OR property_use = 9999)
+					) AS sub1
+				GROUP BY RE
+				) AS sub2
+USING (RE)
 LEFT JOIN
 	(
 	SELECT 
