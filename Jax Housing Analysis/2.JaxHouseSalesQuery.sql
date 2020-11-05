@@ -1,15 +1,8 @@
-SELECT	
-	/* Restated Parcel table columns */
-	(substr(RE,1,6)||' '||substr(RE,7,4)) AS RE, 
-	CASE WHEN mailing_2 NOT NULL THEN (mailing_1||' '||mailing_2)
-		ELSE mailing_1 END AS mailing_address, 
-	mailing_city, mailing_state, property_use, subdivision, neighborhood, property_value, 
-	county_taxable, total_sf, acres,
-	/* Columns from Building table */
-	building, type_descr, style, class, quality, yr_built, perc_complete, bldng_value, heated_sf,
-	/* Restated Sale table columns */
-	trans_id, seller, (year||'-'||month||'-'||day) AS sale_date, price,
-	/* Room columns */
+SELECT 
+	sub1.RE, mailing_address, mailing_city, mailing_state, property_use, subdivision, neighborhood, property_value,
+	county_taxable, lot_size,
+	sub1.building, type_descr, style, class, quality, yr_built, bldng_value, heated_sf,
+	trans_id, (year||'-'||month||'-'||day) AS sale_date, price AS trans_price, parcel_count, ppsf, ppsf*heated_sf AS eff_price,
 	baths, bedrooms, rooms, stories,
 	/* Columns from Feature table */
 	boat_cv, boatcv_avg_grade, boatcv_avg_ppu, boatcv_avg_yr_built, boatcv_total_depreciated,
@@ -22,7 +15,6 @@ SELECT
 	fireplace, fireplace_avg_grade, fireplace_avg_ppu, fireplace_avg_yr_built, fireplace_total_depreciated,
 	gazebo, gazebo_avg_grade, gazebo_avg_ppu, gazebo_avg_yr_built, gazebo_total_depreciated,
 	greenhouse, greenhouse_avg_grade, greenhouse_avg_ppu, greenhouse_avg_yr_built, greenhouse_total_depreciated,
-	coop, coop_avg_grade, coop_avg_ppu, coop_avg_yr_built, coop_total_depreciated,
 	pool, pool_avg_grade, pool_avg_ppu, pool_avg_yr_built, pool_total_depreciated,
 	sauna, sauna_avg_grade, sauna_avg_ppu, sauna_avg_yr_built, sauna_total_depreciated,
 	shed, shed_avg_grade, shed_avg_ppu, shed_avg_yr_built, shed_total_depreciated,
@@ -46,83 +38,70 @@ SELECT
 	stoops, stoop_area, stoop_effec, stoop_heated,
 	storages, storage_area, storage_effec, storage_heated, storage_unfinished,
 	upper_stories, upper_story_area, upper_story_effec, upper_story_heated, upper_story_unfinished
-FROM
-	(SELECT 
-		/* Restated Parcel table columns */
-		RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, property_value, county_taxable, total_sf, acres,
-		/* Columns from Sale table */
-		(or_book || '-' || or_page) AS trans_id, seller, 
-		CASE WHEN substr(sale_date,3,1) = '/' THEN substr(sale_date,1,2) 
-			ELSE ('0'||substr(sale_date,1,1)) END AS month,
-		CASE WHEN substr(sale_date,6,1) = '/' THEN substr(sale_date,4,2) 
-			WHEN (substr(sale_date,3,1) = '/') AND substr(sale_date,5,1) = '/' THEN ('0'||substr(sale_date,4,1))
-			WHEN (substr(sale_date,2,1) = '/') AND substr(sale_date,4,1) = '/' THEN ('0'||substr(sale_date,3,1))
-			ELSE substr(sale_date,3,2) END AS day,
-		substr(sale_date,-4,4) AS year,	 
-		SUM(DISTINCT(price)) AS price
-	FROM 
-		(
-		SELECT 
-		/* Columns from Parcel table */
-		Parcel.RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, just_val AS property_value, county_taxable, square_feet AS total_sf, acres
-		FROM 
-			Parcel
-		WHERE
-			(property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 9999)
-		) AS parcels_query
-	LEFT JOIN Sale
-	USING (RE)
-	WHERE 
-		/* Filter Sale table to remove deed transfers and sales of vacant land */
-		improved = 'I' AND price > 1000
-	GROUP BY RE, sale_date) AS sales_query
-LEFT JOIN
-				/* Utility subquery */
-				(
-				SELECT  RE, SUM(baths) AS baths, SUM(bedrooms) AS bedrooms, SUM(stories) AS stories, SUM(rooms) AS rooms
-				FROM 
-					(
-					SELECT	RE,
-							CASE WHEN structure_descr = 'Baths' THEN unit_count
-								ELSE 0 END AS baths,
-							CASE WHEN structure_descr = 'Bedrooms' THEN unit_count
-								ELSE 0 END AS bedrooms,
-							CASE WHEN structure_descr = 'Stories' THEN unit_count
-								ELSE 0 END AS stories,
-							CASE WHEN structure_descr = 'Rooms / Units' THEN unit_count
-								ELSE 0 END AS rooms
-					FROM Parcel
-					LEFT JOIN Utility
-					USING (RE)
-					WHERE (property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 800 OR property_use = 810 OR property_use = 9999)
-					) AS sub1
-				GROUP BY RE
-				) AS sub2
-USING (RE)
-LEFT JOIN
+FROM 
 	(
 	SELECT 
-		RE, 
-		/* Columns from Building table */
-		Building.building AS building, type_descr, style, class, quality, Building.actual_yr_built AS yr_built, perc_complete, value AS bldng_value, heated_sf
+		RE,
+		CASE WHEN mailing_2 NOT NULL THEN (mailing_1||' '||mailing_2)
+			ELSE mailing_1 END AS mailing_address,
+		mailing_city, mailing_state, property_use, subdivision, neighborhood, just_val AS property_value, county_taxable, 
+		square_feet AS lot_size,
+		Building.building, type_descr, style, class, quality, actual_yr_built AS yr_built, value AS bldng_value, heated_sf,
+		(or_book || '-' || or_page) AS trans_id, seller, 
+			CASE WHEN substr(sale_date,3,1) = '/' THEN substr(sale_date,1,2) 
+				ELSE ('0'||substr(sale_date,1,1)) END AS month,
+			CASE WHEN substr(sale_date,6,1) = '/' THEN substr(sale_date,4,2) 
+				WHEN (substr(sale_date,3,1) = '/') AND substr(sale_date,5,1) = '/' THEN ('0'||substr(sale_date,4,1))
+				WHEN (substr(sale_date,2,1) = '/') AND substr(sale_date,4,1) = '/' THEN ('0'||substr(sale_date,3,1))
+				ELSE substr(sale_date,3,2) END AS day,
+			substr(sale_date,-4,4) AS year,	 
+		price
+	FROM Parcel
+	JOIN Building
+	USING (RE)
+	JOIN Sale
+	USING (RE)
+	WHERE (property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 9999)
+		AND perc_complete = 1.0
+		AND (type_descr LIKE 'SFR%' OR type_descr LIKE 'MH %' OR type_descr = 'TOWNHOUSE')
+		AND price > 1000 AND improved = 'I'
+	) AS sub1
+LEFT JOIN
+	/* Utility subquery */
+	(
+	SELECT  RE, building, SUM(baths) AS baths, SUM(bedrooms) AS bedrooms, SUM(stories) AS stories, SUM(rooms) AS rooms
 	FROM 
 		(
-		SELECT 
-		/* Columns from Parcel table */
-		Parcel.RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, just_val AS property_value, county_taxable, square_feet AS total_sf, acres
-		FROM 
-			Parcel
-		WHERE
-			(property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 9999)
-		)
+		SELECT	RE,
+				building,
+				CASE WHEN structure_descr = 'Baths' THEN unit_count
+					ELSE 0 END AS baths,
+				CASE WHEN structure_descr = 'Bedrooms' THEN unit_count
+					ELSE 0 END AS bedrooms,
+				CASE WHEN structure_descr = 'Stories' THEN unit_count
+					ELSE 0 END AS stories,
+				CASE WHEN structure_descr = 'Rooms / Units' THEN unit_count
+					ELSE 0 END AS rooms
+		FROM Utility
+		) 
+	GROUP BY RE, building
+	) AS sub2
+USING (RE, building)
+LEFT JOIN 
+	(
+	SELECT trans_id, COUNT(RE) AS parcel_count, price/SUM(heated_sf) AS ppsf
+	FROM
+	(
+	SELECT RE, building, heated_sf, (or_book || '-' || or_page) AS trans_id, price
+	FROM Sale
 	LEFT JOIN Building
 	USING (RE)
-	WHERE 
-		Building.building NOT NULL AND (type_descr LIKE 'SFR%' OR type_descr LIKE 'MH %' OR type_descr = 'TOWNHOUSE' OR type_descr = 'CONVERTED RESIDENCE')
-	) AS sales_and_buildings
-USING (RE)
+	)
+	GROUP BY trans_id
+	)
+USING(trans_id)
 LEFT JOIN
-		(
+	(
 	SELECT
 		RE, 
 		building,
@@ -186,24 +165,12 @@ LEFT JOIN
 		ROUND(AVG(greenhouse_ppu),1) AS greenhouse_avg_ppu,
 		ROUND(AVG(greenhouse_yr_built),0) AS greenhouse_avg_yr_built,
 		SUM(greenhouse_depreciated_value) AS greenhouse_total_depreciated,
-		SUM(coop) AS coop,
-		ROUND(AVG(coop_grade),1) AS coop_avg_grade,
-		ROUND(AVG(coop_area),1) AS coop_avg_area,
-		ROUND(AVG(coop_ppu),1) AS coop_avg_ppu,
-		ROUND(AVG(coop_yr_built),0) AS coop_avg_yr_built,
-		SUM(coop_depreciated_value) AS coop_total_depreciated,
 		SUM(pool) AS pool,
 		ROUND(AVG(pool_grade),1) AS pool_avg_grade,
 		ROUND(AVG(pool_area),1) AS pool_avg_area,
 		ROUND(AVG(pool_ppu),1) AS pool_avg_ppu,
 		ROUND(AVG(pool_yr_built),0) AS pool_avg_yr_built,
 		SUM(pool_depreciated_value) AS pool_total_depreciated,
-		SUM(rball_court) AS rball_court,
-		ROUND(AVG(rball_grade),1) AS rball_avg_grade,
-		ROUND(AVG(rball_area),1) AS rball_avg_area,
-		ROUND(AVG(rball_ppu),1) AS rball_avg_ppu,
-		ROUND(AVG(rball_yr_built),0) AS rball_avg_yr_built,
-		SUM(rball_depreciated_value) AS rball_total_depreciated,
 		SUM(sauna) AS sauna,
 		ROUND(AVG(sauna_grade),1) AS sauna_avg_grade,
 		ROUND(AVG(sauna_area),1) AS sauna_avg_area,
@@ -222,32 +189,18 @@ LEFT JOIN
 		ROUND(AVG(spa_ppu),1) AS spa_avg_ppu,
 		ROUND(AVG(spa_yr_built),0) AS spa_avg_yr_built,
 		SUM(spa_depreciated_value) AS spa_total_depreciated,
-		SUM(stable) AS stable,
-		ROUND(AVG(stable_grade),1) AS stable_avg_grade,
-		ROUND(AVG(stable_area),1) AS stable_avg_area,
-		ROUND(AVG(stable_ppu),1) AS stable_avg_ppu,
-		ROUND(AVG(stable_yr_built),0) AS stable_avg_yr_built,
-		SUM(stable_depreciated_value) AS stable_total_depreciated,
 		SUM(sun_rm) AS sun_rm,
 		ROUND(AVG(sunrm_grade),1) AS sunrm_avg_grade,
 		ROUND(AVG(sunrm_area),1) AS sunrm_avg_area,
 		ROUND(AVG(sunrm_ppu),1) AS sunrm_avg_ppu,
 		ROUND(AVG(sunrm_yr_built),0) AS sunrm_avg_yr_built,
-		SUM(sunrm_depreciated_value) AS sunrm_total_depreciated,
-		SUM(tennis_ct) AS tennis_ct,
-		ROUND(AVG(tennis_grade),1) AS tennis_avg_grade,
-		ROUND(AVG(tennis_area),1) AS tennis_avg_area,
-		ROUND(AVG(tennis_ppu),1) AS tennis_avg_ppu,
-		ROUND(AVG(tennis_yr_built),0) AS tennis_avg_yr_built,
-		SUM(tennis_depreciated_value) AS tennis_total_depreciated,
-		SUM(other_fts) AS other_fts
+		SUM(sunrm_depreciated_value) AS sunrm_total_depreciated
 	FROM
 		(
 		SELECT
 			RE,
 			building,
 		-- 	/* Columns from Feature table */
-		-- 	Feature.descr AS feature_descr, grade AS feature_grade, Feature.units AS feature_area, Feature.ppu AS feature_ppu, Feature.actual_yr_built AS feature_yr_built, deprec_val AS feature_depreciated_val
 			CASE WHEN descr LIKE 'Boat%' THEN 1
 				ELSE NULL END AS boat_cv,
 			CASE WHEN descr LIKE 'Boat%' THEN grade
@@ -272,8 +225,6 @@ LEFT JOIN
 				ELSE NULL END AS carportft_yr_built,
 			CASE WHEN descr LIKE 'Carp%' THEN deprec_val 
 				ELSE NULL END AS carportft_depreciated_value,
-			CASE WHEN descr LIKE 'Carp%' THEN substr(descr,-2,2)
-				ELSE NULL END AS carportft_material,
 			CASE WHEN descr LIKE 'Cov P%' THEN 1
 				ELSE NULL END AS cov_patio,
 			CASE WHEN descr LIKE 'Cov P%' THEN grade
@@ -286,30 +237,6 @@ LEFT JOIN
 				ELSE NULL END AS covpatio_yr_built,
 			CASE WHEN descr LIKE 'Cov P%' THEN deprec_val 
 				ELSE NULL END AS covpatio_depreciated_value,
-	-- 		CASE WHEN descr LIKE 'Ctl%' THEN 1
-	-- 			ELSE 0 END AS cattle_shed,
-	-- 		CASE WHEN descr LIKE 'Ctl%' THEN grade
-	-- 			ELSE 0 END AS cattleshed_grade,
-	-- 		CASE WHEN descr LIKE 'Ctl%' THEN Feature.units
-	-- 			ELSE 0 END AS cattleshed_area,
-	-- 		CASE WHEN descr LIKE 'Ctl%' THEN Feature.ppu
-	-- 			ELSE 0 END AS cattleshed_ppu,
-	-- 		CASE WHEN descr LIKE 'Ctl%' THEN Feature.actual_yr_built
-	-- 			ELSE 0 END AS cattleshed_yr_built,
-	-- 		CASE WHEN descr LIKE 'Ctl%' THEN deprec_val 
-	-- 			ELSE 0 END AS cattleshed_depreciated_value,
-	-- 		CASE WHEN descr LIKE 'Dairy%' THEN 1
-	-- 			ELSE 0 END AS dairy,
-	-- 		CASE WHEN descr LIKE 'Dairy%' THEN grade
-	-- 			ELSE 0 END AS dairy_grade,
-	-- 		CASE WHEN descr LIKE 'Dairy%' THEN Feature.units
-	-- 			ELSE 0 END AS dairy_area,
-	-- 		CASE WHEN descr LIKE 'Dairy%' THEN Feature.ppu
-	-- 			ELSE 0 END AS dairy_ppu,
-	-- 		CASE WHEN descr LIKE 'Dairy%' THEN Feature.actual_yr_built
-	-- 			ELSE 0 END AS dairy_yr_built,
-	-- 		CASE WHEN descr LIKE 'Dairy%' THEN deprec_val 
-	-- 			ELSE 0 END AS dairy_depreciated_value,
 			CASE WHEN descr LIKE 'Deck%' THEN 1
 				ELSE NULL END AS deck_ft,
 			CASE WHEN descr LIKE 'Deck%' THEN grade
@@ -358,8 +285,6 @@ LEFT JOIN
 				ELSE NULL END AS fence_yr_built,
 			CASE WHEN descr LIKE 'Fence%' THEN deprec_val 
 				ELSE NULL END AS fence_depreciated_value,
-	-- 		CASE WHEN descr LIKE 'Fence%' THEN substr(descr,-4,4)
-	-- 			ELSE '' END AS fence_material,
 			CASE WHEN descr LIKE 'Firep%' THEN 1
 				ELSE NULL END AS fireplace,
 			CASE WHEN descr LIKE 'Firep%' THEN grade
@@ -396,18 +321,6 @@ LEFT JOIN
 				ELSE NULL END AS greenhouse_yr_built,
 			CASE WHEN descr LIKE 'Grnh%' THEN deprec_val 
 				ELSE NULL END AS greenhouse_depreciated_value,
-			CASE WHEN descr LIKE 'Plty%' THEN 1
-				ELSE NULL END AS coop,
-			CASE WHEN descr LIKE 'Plty%' THEN grade
-				ELSE NULL END AS coop_grade,
-			CASE WHEN descr LIKE 'Plty%' THEN Feature.units
-				ELSE NULL END AS coop_area,
-			CASE WHEN descr LIKE 'Plty%' THEN Feature.ppu
-				ELSE NULL END AS coop_ppu,
-			CASE WHEN descr LIKE 'Plty%' THEN Feature.actual_yr_built
-				ELSE NULL END AS coop_yr_built,
-			CASE WHEN descr LIKE 'Plty%' THEN deprec_val 
-				ELSE NULL END AS coop_depreciated_value,
 			CASE WHEN descr LIKE 'Pool%' THEN 1
 				ELSE NULL END AS pool,
 			CASE WHEN descr LIKE 'Pool%' THEN grade
@@ -420,18 +333,6 @@ LEFT JOIN
 				ELSE NULL END AS pool_yr_built,
 			CASE WHEN descr LIKE 'Pool%' THEN deprec_val 
 				ELSE NULL END AS pool_depreciated_value,
-			CASE WHEN descr LIKE 'Rball%' THEN 1
-				ELSE NULL END AS rball_court,
-			CASE WHEN descr LIKE 'Rball%' THEN grade
-				ELSE NULL END AS rball_grade,
-			CASE WHEN descr LIKE 'Rball%' THEN Feature.units
-				ELSE NULL END AS rball_area,
-			CASE WHEN descr LIKE 'Rball%' THEN Feature.ppu
-				ELSE NULL END AS rball_ppu,
-			CASE WHEN descr LIKE 'Rball%' THEN Feature.actual_yr_built
-				ELSE NULL END AS rball_yr_built,
-			CASE WHEN descr LIKE 'Rball%' THEN deprec_val 
-				ELSE NULL END AS rball_depreciated_value,
 			CASE WHEN descr LIKE 'Sauna' THEN 1
 				ELSE NULL END AS sauna,
 			CASE WHEN descr LIKE 'Sauna' THEN grade
@@ -456,8 +357,6 @@ LEFT JOIN
 				ELSE NULL END AS shed_yr_built,
 			CASE WHEN descr LIKE 'Shed%' THEN deprec_val 
 				ELSE NULL END AS shed_depreciated_value,
-	-- 		CASE WHEN descr LIKE 'Shed%' THEN substr(descr,-4,4)
-	-- 			ELSE '' END AS shed_material,
 			CASE WHEN descr LIKE 'Spa' THEN 1
 				ELSE NULL END AS spa,
 			CASE WHEN descr LIKE 'Spa' THEN grade
@@ -470,18 +369,6 @@ LEFT JOIN
 				ELSE NULL END AS spa_yr_built,
 			CASE WHEN descr LIKE 'Spa' THEN deprec_val 
 				ELSE NULL END AS spa_depreciated_value,
-			CASE WHEN descr LIKE 'Stable%' THEN 1
-				ELSE NULL END AS stable,
-			CASE WHEN descr LIKE 'Stable%' THEN grade
-				ELSE NULL END AS stable_grade,
-			CASE WHEN descr LIKE 'Stable%' THEN Feature.units
-				ELSE NULL END AS stable_area,
-			CASE WHEN descr LIKE 'Stable%' THEN Feature.ppu
-				ELSE NULL END AS stable_ppu,
-			CASE WHEN descr LIKE 'Stable%' THEN Feature.actual_yr_built
-				ELSE NULL END AS stable_yr_built,
-			CASE WHEN descr LIKE 'Stable%' THEN deprec_val 
-				ELSE NULL END AS stable_depreciated_value,
 			CASE WHEN descr LIKE 'Sun R%' THEN 1
 				ELSE NULL END AS sun_rm,
 			CASE WHEN descr LIKE 'Sun R%' THEN grade
@@ -493,79 +380,8 @@ LEFT JOIN
 			CASE WHEN descr LIKE 'Sun R%' THEN Feature.actual_yr_built
 				ELSE NULL END AS sunrm_yr_built,
 			CASE WHEN descr LIKE 'Sun R%' THEN deprec_val 
-				ELSE NULL END AS sunrm_depreciated_value,
-			CASE WHEN descr LIKE 'Tennis%' THEN 1
-				ELSE NULL END AS tennis_ct,
-			CASE WHEN descr LIKE 'Tennis%' THEN grade
-				ELSE NULL END AS tennis_grade,
-			CASE WHEN descr LIKE 'Tennis%' THEN Feature.units
-				ELSE NULL END AS tennis_area,
-			CASE WHEN descr LIKE 'Tennis%' THEN Feature.ppu
-				ELSE NULL END AS tennis_ppu,
-			CASE WHEN descr LIKE 'Tennis%' THEN Feature.actual_yr_built
-				ELSE NULL END AS tennis_yr_built,
-			CASE WHEN descr LIKE 'Tennis%' THEN deprec_val 
-				ELSE NULL END AS tennis_depreciated_value,
-			CASE WHEN (descr LIKE 'Can D%' OR descr LIKE 'Elev St%' OR descr LIKE 'Equip%' OR descr LIKE'F/P%' OR descr LIKE 'GP Barn%' OR descr LIKE 'Gar/%' OR descr LIKE 'Grg/%' OR descr LIKE 'Hay%' OR descr LIKE 'Light%' OR descr LIKE 'Lt Pole%' OR descr LIKE 'Pav %' OR descr LIKE 'Res E%' OR descr LIKE 'Scr%' OR descr LIKE 'Sprink%' OR descr LIKE 'Tool%' OR descr LIKE 'Utility%') THEN 1
-				ELSE 0 END AS other_fts
-			FROM 
-				(
-				SELECT 
-				/* Restated Parcel table columns */
-				RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, property_value, county_taxable, total_sf, acres,
-				/* Columns from Building table */
-				bldng_num, type_descr, style, class, quality, yr_built, perc_complete, bldng_value, heated_sf,
-				/* Restated Sale table columns */
-				trans_id, seller, sale_date, price
-				FROM
-					(SELECT 
-						/* Restated Parcel table columns */
-						RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, property_value, county_taxable, total_sf, acres,
-						/* Columns from Sale table */
-						(or_book || '-' || or_page) AS trans_id, seller, sale_date, SUM(DISTINCT(price)) AS price
-					FROM 
-						(
-						SELECT 
-						/* Columns from Parcel table */
-						Parcel.RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, just_val AS property_value, county_taxable, square_feet AS total_sf, acres
-						FROM 
-							Parcel
-						WHERE
-							(property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 9999)
-						) AS parcels_query
-					LEFT JOIN Sale
-					USING (RE)
-					WHERE 
-						/* Filter Sale table to remove deed transfers and sales of vacant land */
-						improved = 'I' AND price > 1000
-					GROUP BY RE, sale_date) AS sales_query
-				LEFT JOIN
-					(
-					SELECT 
-						RE, 
-						/* Columns from Building table */
-						Building.building AS bldng_num, type_descr, style, class, quality, Building.actual_yr_built AS yr_built, perc_complete, value AS bldng_value, heated_sf
-					FROM 
-						(
-						SELECT 
-						/* Columns from Parcel table */
-						Parcel.RE, mailing_1, mailing_2, mailing_city, mailing_state, property_use, subdivision, neighborhood, just_val AS property_value, county_taxable, square_feet AS total_sf, acres
-						FROM 
-							Parcel
-						WHERE
-							(property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 9999)
-						)
-					LEFT JOIN Building
-					USING (RE)
-					WHERE 
-						Building.building NOT NULL AND (type_descr LIKE 'SFR%' OR type_descr LIKE 'MH %' OR type_descr = 'TOWNHOUSE' OR type_descr = 'CONVERTED RESIDENCE')
-					)
-				USING (RE)
-			)
-		LEFT JOIN Feature
-		USING (RE)
-		WHERE descr NOT NULL
-		)
+				ELSE NULL END AS sunrm_depreciated_value
+			FROM Feature)
 	GROUP BY RE, building
 	) AS features_fixed
 USING (RE, building)
@@ -816,11 +632,7 @@ LEFT JOIN
 							ELSE 0 END AS det_utility_heated,
 						CASE WHEN (sub_structure_descr LIKE '%Utility') AND (sub_structure_descr LIKE 'Unfin%') THEN 1
 							ELSE 0 END AS det_utility_unfinished		
-						FROM Parcel
-						LEFT JOIN Subarea
-						USING (RE)
-						WHERE (property_use = 0 OR property_use = 100 OR property_use = 200 OR property_use = 700 OR property_use = 9999)
-								AND sub_structure_descr <> 'Base Area' AND sub_structure_descr <> 'Adds Additional Area' AND sub_structure_descr NOT LIKE '%Office%'
+						FROM Subarea
 						) AS subarea_cols
 						GROUP BY RE, building
 				) AS subarea_totals
