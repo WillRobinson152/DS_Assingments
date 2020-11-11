@@ -1,18 +1,6 @@
--- SELECT RE, building, owner, SUM(DISTINCT(land_val)) AS land_val
--- FROM
--- 
--- (SELECT RE, building, owner, market_val, assessed_val, building_val, land_val, square_feet, value, trans_id, trans_line, seller, qualification, improved, deed_descr, sale_date, price
--- FROM Duval
--- WHERE price > 0)
--- 
--- GROUP BY RE, building
-
--- SELECT RE, building, owner, market_val, assessed_val, building_val, land_val, square_feet, value, trans_id, trans_line, seller, qualification, improved, deed_descr, sale_date, price, heated_sf
--- FROM Duval
--- WHERE price > 0
-
 SELECT
-		RE, mailing_address, mailing_city, mailing_state, property_use, subdivision, neighborhood,
+		(substr(RE,1,6)||substr(RE,7,4)) AS RE,
+		mailing_address, mailing_city, mailing_state, property_use, subdivision, neighborhood,
 		cap_base_yr, building_val, SUM(DISTINCT(land_val)) AS land_val, just_val - SUM(DISTINCT(land_val)) - building_val AS feature_val, just_val, market_val, assessed_val, 
 		just_val - school_taxable AS school_exempt, just_val - county_taxable AS county_exempt, just_val - sjrwnd_taxable AS sjrwnd_exempt, taxing_district, 
 		square_feet AS lot_size, heated_sf, char_descr,
