@@ -61,11 +61,13 @@ LEFT JOIN
 	(SELECT  RE, (or_book||'_'||or_page) AS trans_id, sale_id AS trans_line, seller, qualification, improved, instr_descr, deed_descr, 
 			CASE WHEN substr(sale_date,2,1) = '/' THEN ('0'||substr(sale_date,1,1))
 					ELSE substr(sale_date,1,2) END AS month,
-				CASE WHEN (substr(sale_date,2,1) = '/' AND substr(sale_date,4,1) = '/') THEN ('0'||substr(sale_date,3,1))
-					WHEN (substr(sale_date,3,1) = '/' AND substr(sale_date,5,1) = '/') THEN ('0'||substr(sale_date,4,1))
-					WHEN (substr(sale_date,3,1) = '/' AND substr(sale_date,6,1) = '/') THEN substr(sale_date,4,2)
-					ELSE substr(sale_date,3,2) END AS day,
-				substr(sale_date,-4,4) AS year,
+			CASE WHEN (substr(sale_date,2,1) = '/' AND substr(sale_date,4,1) = '/') THEN ('0'||substr(sale_date,3,1))
+				WHEN (substr(sale_date,3,1) = '/' AND substr(sale_date,5,1) = '/') THEN ('0'||substr(sale_date,4,1))
+				WHEN (substr(sale_date,3,1) = '/' AND substr(sale_date,6,1) = '/') THEN substr(sale_date,4,2)
+				ELSE substr(sale_date,3,2) END AS day,
+			CASE WHEN (substr(sale_date,-1,1) = 'M') AND (substr(sale_date,-11,1) = ' ') THEN substr(sale_date,-15,4)
+				WHEN (substr(sale_date,-1,1) = 'M') AND (substr(sale_date,-11,1) <> ' ') THEN substr(sale_date,-16,4)
+				ELSE substr(sale_date,-4,4) END AS year,
 			price
 	FROM Sale)
 USING (RE)) AS sub1
@@ -124,195 +126,195 @@ FROM
 	RE,
 	building,
 	CASE WHEN descr LIKE 'Bkhd%' THEN 1
-		ELSE NULL END AS bkhd,
+		ELSE 0 END AS bkhd,
 	CASE WHEN descr LIKE 'Bkhd%' THEN units
-		ELSE NULL END AS bkhd_units,
+		ELSE 0 END AS bkhd_units,
 	CASE WHEN descr LIKE 'Bkhd%' THEN ppu
-		ELSE NULL END AS bkhd_ppu,
+		ELSE 0 END AS bkhd_ppu,
 	CASE WHEN descr LIKE 'Bkhd%' THEN actual_yr_built
-		ELSE NULL END AS bkhd_yr_built,
+		ELSE 0 END AS bkhd_yr_built,
 	CASE WHEN descr LIKE 'Bkhd%' THEN deprec_val
-		ELSE NULL END AS bkhd_deprec_val,
+		ELSE 0 END AS bkhd_deprec_val,
 	CASE WHEN descr LIKE 'Boat Cv' THEN 1
-		ELSE NULL END AS boatcv,
+		ELSE 0 END AS boatcv,
 	CASE WHEN descr LIKE 'Boat Cv' THEN units
-		ELSE NULL END AS boatcv_units,
+		ELSE 0 END AS boatcv_units,
 	CASE WHEN descr LIKE 'Boat Cv' THEN ppu
-		ELSE NULL END AS boatcv_ppu,
+		ELSE 0 END AS boatcv_ppu,
 	CASE WHEN descr LIKE 'Boat Cv' THEN actual_yr_built
-		ELSE NULL END AS boatcv_yr_built,
+		ELSE 0 END AS boatcv_yr_built,
 	CASE WHEN descr LIKE 'Boat Cv' THEN deprec_val
-		ELSE NULL END AS boatcv_deprec_val,
+		ELSE 0 END AS boatcv_deprec_val,
 	CASE WHEN descr LIKE 'Can Det%' THEN 1
-		ELSE NULL END AS candet,
+		ELSE 0 END AS candet,
 	CASE WHEN descr LIKE 'Can Det%' THEN units
-		ELSE NULL END AS candet_units,
+		ELSE 0 END AS candet_units,
 	CASE WHEN descr LIKE 'Can Det%' THEN ppu
-		ELSE NULL END AS candet_ppu,
+		ELSE 0 END AS candet_ppu,
 	CASE WHEN descr LIKE 'Can Det%' THEN actual_yr_built
-		ELSE NULL END AS candet_yr_built,
+		ELSE 0 END AS candet_yr_built,
 	CASE WHEN descr LIKE 'Can Det%' THEN deprec_val
-		ELSE NULL END AS candet_deprec_val,
+		ELSE 0 END AS candet_deprec_val,
 	CASE WHEN descr LIKE 'Carport%' THEN 1
-		ELSE NULL END AS carport,
+		ELSE 0 END AS carport,
 	CASE WHEN descr LIKE 'Carport%' THEN units
-		ELSE NULL END AS carport_units,
+		ELSE 0 END AS carport_units,
 	CASE WHEN descr LIKE 'Carport%' THEN ppu
-		ELSE NULL END AS carport_ppu,
+		ELSE 0 END AS carport_ppu,
 	CASE WHEN descr LIKE 'Carport%' THEN actual_yr_built
-		ELSE NULL END AS carport_yr_built,
+		ELSE 0 END AS carport_yr_built,
 	CASE WHEN descr LIKE 'Carport%' THEN deprec_val
-		ELSE NULL END AS carport_deprec_val,
+		ELSE 0 END AS carport_deprec_val,
 	CASE WHEN descr LIKE 'Cov Pa%' THEN 1
-		ELSE NULL END AS covpatio,
+		ELSE 0 END AS covpatio,
 	CASE WHEN descr LIKE 'Cov Pat%' THEN units
-		ELSE NULL END AS covpatio_units,
+		ELSE 0 END AS covpatio_units,
 	CASE WHEN descr LIKE 'Cov Pat%' THEN ppu
-		ELSE NULL END AS covpatio_ppu,
+		ELSE 0 END AS covpatio_ppu,
 	CASE WHEN descr LIKE 'Cov Pat%' THEN actual_yr_built
-		ELSE NULL END AS covpatio_yr_built,
+		ELSE 0 END AS covpatio_yr_built,
 	CASE WHEN descr LIKE 'Cov Pat%' THEN deprec_val
-		ELSE NULL END AS covpatio_deprec_val,
+		ELSE 0 END AS covpatio_deprec_val,
 	CASE WHEN descr = 'Deck Wd' THEN 1
-		ELSE NULL END AS deck,
+		ELSE 0 END AS deck,
 	CASE WHEN descr = 'Deck Wd' THEN units
-		ELSE NULL END AS deck_units,
+		ELSE 0 END AS deck_units,
 	CASE WHEN descr = 'Deck Wd' THEN ppu
-		ELSE NULL END AS deck_ppu,
+		ELSE 0 END AS deck_ppu,
 	CASE WHEN descr = 'Deck Wd' THEN actual_yr_built
-		ELSE NULL END AS deck_yr_built,
+		ELSE 0 END AS deck_yr_built,
 	CASE WHEN descr = 'Deck Wd' THEN deprec_val
-		ELSE NULL END AS deck_deprec_val,
+		ELSE 0 END AS deck_deprec_val,
 	CASE WHEN descr LIKE 'Dock%' THEN 1
-		ELSE NULL END AS dock,
+		ELSE 0 END AS dock,
 	CASE WHEN descr LIKE 'Dock%' THEN units
-		ELSE NULL END AS dock_units,
+		ELSE 0 END AS dock_units,
 	CASE WHEN descr LIKE 'Dock%' THEN ppu
-		ELSE NULL END AS dock_ppu,
+		ELSE 0 END AS dock_ppu,
 	CASE WHEN descr LIKE 'Dock%' THEN actual_yr_built
-		ELSE NULl END AS dock_yr_built,
+		ELSE 0 END AS dock_yr_built,
 	CASE WHEN descr LIKE 'Dock%' THEN deprec_val
-		ELSE NULL END AS dock_deprec_val,
+		ELSE 0 END AS dock_deprec_val,
 	CASE WHEN descr LIKE 'Elev Stp%' THEN 1
-		ELSE NULL END AS elevstp,
+		ELSE 0 END AS elevstp,
 	CASE WHEN descr LIKE 'Elev Stp%' THEN units
-		ELSE NULL END AS elevstp_units,
+		ELSE 0 END AS elevstp_units,
 	CASE WHEN descr LIKE 'Elev Stp%' THEN ppu
-		ELSE NULL END AS elevstp_ppu,
+		ELSE 0 END AS elevstp_ppu,
 	CASE WHEN descr LIKE 'Elev Stp%' THEN actual_yr_built
-		ELSE NULL END AS elevstp_yr_built,
+		ELSE 0 END AS elevstp_yr_built,
 	CASE WHEN descr LIKE 'Elev Stp%' THEN deprec_val
-		ELSE NULL END AS elevstp_deprec_val,
+		ELSE 0 END AS elevstp_deprec_val,
 	CASE WHEN descr LIKE 'Elevator%' THEN 1
-		ELSE NULL END AS elevator,
+		ELSE 0 END AS elevator,
 	CASE WHEN descr LIKE 'Elevator%' THEN units
-		ELSE NULL END AS elevator_units,
+		ELSE 0 END AS elevator_units,
 	CASE WHEN descr LIKE 'Elevator%' THEN ppu
-		ELSE NULL END AS elevator_ppu,
+		ELSE 0 END AS elevator_ppu,
 	CASE WHEN descr LIKE 'Elevator%' THEN actual_yr_built
-		ELSE NULL END AS elevator_yr_built,
+		ELSE 0 END AS elevator_yr_built,
 	CASE WHEN descr LIKE 'Elevator%' THEN deprec_val
-		ELSE NULL END AS elevator_deprec_val,
+		ELSE 0 END AS elevator_deprec_val,
 	CASE WHEN descr LIKE 'Fence%' THEN 1
-		ELSE NULL END AS fence,
+		ELSE 0 END AS fence,
 	CASE WHEN descr LIKE 'Fence%' THEN units
-		ELSE NULL END AS fence_units,
+		ELSE 0 END AS fence_units,
 	CASE WHEN descr LIKE 'Fence%' THEN ppu
-		ELSE NULL END AS fence_ppu,
+		ELSE 0 END AS fence_ppu,
 	CASE WHEN descr LIKE 'Fence%' THEN actual_yr_built
-		ELSE NULL END AS fence_yr_built,
+		ELSE 0 END AS fence_yr_built,
 	CASE WHEN descr LIKE 'Fence%' THEN deprec_val
-		ELSE NULL END AS fence_deprec_val,
+		ELSE 0 END AS fence_deprec_val,
 	CASE WHEN descr LIKE 'Firep%' THEN 1
-		ELSE NULL END AS fireplace,
+		ELSE 0 END AS fireplace,
 	CASE WHEN descr LIKE 'Firep%' THEN units
-		ELSE NULL END AS fireplace_units,
+		ELSE 0 END AS fireplace_units,
 	CASE WHEN descr LIKE 'Firep%' THEN ppu
-		ELSE NULL END AS fireplace_ppu,
+		ELSE 0 END AS fireplace_ppu,
 	CASE WHEN descr LIKE 'Firep%' THEN actual_yr_built
-		ELSE NULL END AS fireplace_yr_built,
+		ELSE 0 END AS fireplace_yr_built,
 	CASE WHEN descr LIKE 'Firep%' THEN deprec_val
-		ELSE NULL END AS fireplace_deprec_val,
+		ELSE 0 END AS fireplace_deprec_val,
 	CASE WHEN descr LIKE 'Light%' THEN 1
-		ELSE NULL END AS lightfix,
+		ELSE 0 END AS lightfix,
 	CASE WHEN descr LIKE 'Light%' THEN units
-		ELSE NULL END AS lightfix_units,
+		ELSE 0 END AS lightfix_units,
 	CASE WHEN descr LIKE 'Light%' THEN ppu
-		ELSE NULL END AS lightfix_ppu,
+		ELSE 0 END AS lightfix_ppu,
 	CASE WHEN descr LIKE 'Light%' THEN actual_yr_built
-		ELSE NULL END AS lightfix_yr_built,
+		ELSE 0 END AS lightfix_yr_built,
 	CASE WHEN descr LIKE 'Light%' THEN deprec_val
-		ELSE NULL END AS lightfix_deprec_val,
+		ELSE 0 END AS lightfix_deprec_val,
 	CASE WHEN descr LIKE 'Lt Pole%' THEN 1
-		ELSE NULL END AS ltpole,
+		ELSE 0 END AS ltpole,
 	CASE WHEN descr LIKE 'Lt Pole%' THEN units
-		ELSE NULL END AS ltpole_units,
+		ELSE 0 END AS ltpole_units,
 	CASE WHEN descr LIKE 'Lt Pole%' THEN ppu
-		ELSE NULL END AS ltpole_ppu,
+		ELSE 0 END AS ltpole_ppu,
 	CASE WHEN descr LIKE 'Lt Pole%' THEN actual_yr_built
-		ELSE NULL END AS ltpole_yr_built,
+		ELSE 0 END AS ltpole_yr_built,
 	CASE WHEN descr LIKE 'Lt Pole%' THEN deprec_val
-		ELSE NULL END AS ltpole_deprec_val,
+		ELSE 0 END AS ltpole_deprec_val,
 	CASE WHEN descr LIKE 'Mezz%' THEN 1
-		ELSE NULL END AS mezz,
+		ELSE 0 END AS mezz,
 	CASE WHEN descr LIKE 'Mezz%' THEN units
-		ELSE NULL END AS mezz_units,
+		ELSE 0 END AS mezz_units,
 	CASE WHEN descr LIKE 'Mezz%' THEN ppu
-		ELSE NULL END AS mezz_ppu,
+		ELSE 0 END AS mezz_ppu,
 	CASE WHEN descr LIKE 'Mezz%' THEN actual_yr_built
-		ELSE NULL END AS mezz_yr_built,
+		ELSE 0 END AS mezz_yr_built,
 	CASE WHEN descr LIKE 'Mezz%' THEN deprec_val
-		ELSE NULL END AS mezz_deprec_val,
+		ELSE 0 END AS mezz_deprec_val,
 	CASE WHEN descr LIKE 'Pav%' THEN 1
-		ELSE NULL END AS pave,
+		ELSE 0 END AS pave,
 	CASE WHEN descr LIKE 'Pav%' THEN units
-		ELSE NULL END AS pave_units,
+		ELSE 0 END AS pave_units,
 	CASE WHEN descr LIKE 'Pav%' THEN ppu
-		ELSE NULL END AS pave_ppu,
+		ELSE 0 END AS pave_ppu,
 	CASE WHEN descr LIKE 'Pav%' THEN actual_yr_built
-		ELSE NULL END AS pave_yr_built,
+		ELSE 0 END AS pave_yr_built,
 	CASE WHEN descr LIKE 'Pav%' THEN deprec_val
-		ELSE NULL END AS pave_deprec_val,
+		ELSE 0 END AS pave_deprec_val,
 	CASE WHEN descr = 'Pool' THEN 1
-		ELSE NULL END AS pool,
+		ELSE 0 END AS pool,
 	CASE WHEN descr = 'Pool' THEN units
-		ELSE NULL END AS pool_units,
+		ELSE 0 END AS pool_units,
 	CASE WHEN descr = 'Pool' THEN ppu
-		ELSE NULL END AS pool_ppu,
+		ELSE 0 END AS pool_ppu,
 	CASE WHEN descr = 'Pool' THEN actual_yr_built
-		ELSE NULL END AS pool_yr_built,
+		ELSE 0 END AS pool_yr_built,
 	CASE WHEN descr = 'Pool' THEN deprec_val
-		ELSE NULL END AS pool_deprec_val,
+		ELSE 0 END AS pool_deprec_val,
 	CASE WHEN descr LIKE 'Scr Po%' THEN 1
-		ELSE NULL END AS scrporch,
+		ELSE 0 END AS scrporch,
 	CASE WHEN descr LIKE 'Scr Po%' THEN units
-		ELSE NULL END AS scrporch_units,
+		ELSE 0 END AS scrporch_units,
 	CASE WHEN descr LIKE 'Scr Po%' THEN ppu
-		ELSE NULL END AS scrporch_ppu,
+		ELSE 0 END AS scrporch_ppu,
 	CASE WHEN descr LIKE 'Scr Po%' THEN actual_yr_built
-		ELSE NULL END AS scrporch_yr_built,
+		ELSE 0 END AS scrporch_yr_built,
 	CASE WHEN descr LIKE 'Scr Po%' THEN deprec_val
-		ELSE NULL END AS scrporch_deprec_val,
+		ELSE 0 END AS scrporch_deprec_val,
 	CASE WHEN descr LIKE 'Screen%' THEN 1
-		ELSE NULL END AS screncl,
+		ELSE 0 END AS screncl,
 	CASE WHEN descr LIKE 'Screen%' THEN units
-		ELSE NULL END AS screncl_units,
+		ELSE 0 END AS screncl_units,
 	CASE WHEN descr LIKE 'Screen%' THEN ppu
-		ELSE NULL END AS screncl_ppu,
+		ELSE 0 END AS screncl_ppu,
 	CASE WHEN descr LIKE 'Screen%' THEN actual_yr_built
-		ELSE NULL END AS screncl_yr_built,
+		ELSE 0 END AS screncl_yr_built,
 	CASE WHEN descr LIKE 'Screen%' THEN deprec_val
-		ELSE NULL END AS screncl_deprec_val,
+		ELSE 0 END AS screncl_deprec_val,
 	CASE WHEN descr LIKE 'Shed%' THEN 1
-		ELSE NULL END AS shed,
+		ELSE 0 END AS shed,
 	CASE WHEN descr LIKE 'Shed%' THEN units
-		ELSE NULL END AS shed_units,
+		ELSE 0 END AS shed_units,
 	CASE WHEN descr LIKE 'Shed%' THEN ppu
-		ELSE NULL END AS shed_ppu,
+		ELSE 0 END AS shed_ppu,
 	CASE WHEN descr LIKE 'Shed%' THEN actual_yr_built
-		ELSE NULL END AS shed_yr_built,
+		ELSE 0 END AS shed_yr_built,
 	CASE WHEN descr LIKE 'Shed%' THEN deprec_val
-		ELSE NULL END AS shed_deprec_val
+		ELSE 0 END AS shed_deprec_val
 FROM Feature)
 GROUP BY RE, building)
 USING (RE, building)
@@ -329,37 +331,37 @@ LEFT JOIN
 FROM
 (SELECT  RE, building,
 		CASE WHEN sub_structure_descr = 'Addition' THEN 1
-			ELSE NULL END AS addition,
+			ELSE 0 END AS addition,
 		CASE WHEN sub_structure_descr = 'Addition' THEN actual_area
-			ELSE NULL END AS addition_area,
+			ELSE 0 END AS addition_area,
 		CASE WHEN sub_structure_descr = 'Balcony' THEN 1
-			ELSE NULL END AS balcony,
+			ELSE 0 END AS balcony,
 		CASE WHEN sub_structure_descr = 'Balcony' THEN actual_area
-			ELSE NULL END AS balcony_area,
+			ELSE 0 END AS balcony_area,
 		CASE WHEN sub_structure_descr LIKE 'Canopy%' THEN 1
-			ELSE NULL END AS canopy,
+			ELSE 0 END AS canopy,
 		CASE WHEN sub_structure_descr LIKE 'Canopy%' THEN actual_area
-			ELSE NULL END AS canopy_area,
+			ELSE 0 END AS canopy_area,
 		CASE WHEN sub_structure_descr LIKE '%Office' THEN 1
-			ELSE NULL END AS office,
+			ELSE 0 END AS office,
 		CASE WHEN sub_structure_descr LIKE '%Office' THEN actual_area
-			ELSE NULL END AS office_area,
+			ELSE 0 END AS office_area,
 		CASE WHEN sub_structure_descr LIKE 'Fin%Garage' THEN 1
-			ELSE NULL END AS garage,
+			ELSE 0 END AS garage,
 		CASE WHEN sub_structure_descr LIKE 'Fin%Garage' THEN actual_area
-			ELSE NULL END AS garage_area,
+			ELSE 0 END AS garage_area,
 		CASE WHEN sub_structure_descr LIKE 'Fin%Porch' THEN 1
-			ELSE NULL END AS porch,
+			ELSE 0 END AS porch,
 		CASE WHEN sub_structure_descr LIKE 'Fin%Porch' THEN actual_area
-			ELSE NULL END AS porch_area,
+			ELSE 0 END AS porch_area,
 		CASE WHEN sub_structure_descr LIKE 'Fin%Storage' THEN 1
-			ELSE NULL END AS storage,
+			ELSE 0 END AS storage,
 		CASE WHEN sub_structure_descr LIKE 'Fin%Storage' THEN actual_area
-			ELSE NULL END AS storage_area,
+			ELSE 0 END AS storage_area,
 		CASE WHEN sub_structure_descr LIKE 'Finished upper story%' THEN 1
-			ELSE NULL END AS upperstory,
+			ELSE 0 END AS upperstory,
 		CASE WHEN sub_structure_descr LIKE 'Finished upper story%' THEN actual_area
-			ELSE NULL END AS upperstory_area
+			ELSE 0 END AS upperstory_area
 FROM Subarea)
 GROUP BY RE, building)
 USING (RE, building)

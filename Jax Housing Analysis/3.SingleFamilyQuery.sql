@@ -24,7 +24,7 @@ LEFT JOIN
 FROM Duval
 LEFT JOIN Qualification
 ON q_id = qualification
-WHERE property_use = 100 AND status = 'Qualified'
+WHERE property_use = 100 AND status = 'Qualified' AND improved = 'I'
 GROUP BY trans_id) AS sub1
 USING (RE, building)
 WHERE property_use = 100
