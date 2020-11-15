@@ -1,9 +1,9 @@
 SELECT
-		(substr(RE,1,6)||substr(RE,7,4)) AS RE,
+		(substr(RE,1,6)||' '||substr(RE,7,4)) AS RE,
 		mailing_address, mailing_city, mailing_state, property_use, subdivision, neighborhood,
 		cap_base_yr, building_val, SUM(DISTINCT(land_val)) AS land_val, just_val - SUM(DISTINCT(land_val)) - building_val AS feature_val, just_val, market_val, assessed_val, 
 		just_val - school_taxable AS school_exempt, just_val - county_taxable AS county_exempt, just_val - sjrwnd_taxable AS sjrwnd_exempt, taxing_district, 
-		square_feet AS lot_size, heated_sf, char_descr,
+		square_feet AS lot_size, heated_sf, UPPER(char_descr) AS char_descr,
 		type_descr, style, class, quality, actual_yr_built, effec_yr_built, perc_complete, 
 		stories, bedrooms, baths, rooms, 
 		Duval.owner, sub1.trans_id, sub1.sale_date, sub1.seller, sub1.owner AS buyer, sub1.price,
