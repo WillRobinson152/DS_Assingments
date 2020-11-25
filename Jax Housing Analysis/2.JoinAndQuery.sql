@@ -35,6 +35,8 @@ SELECT
 		class, quality, IFNULL(actual_yr_built,0) AS actual_yr_built,
 		IFNULL(effec_yr_built,0) AS effec_yr_built, IFNULL(perc_complete,0.0) AS perc_complete, 
 		IFNULL(value,0) AS value, IFNULL(heated_sf,0) AS heated_sf,
+		/* Site table query */
+		site_address, site_city, site_zipcode,
 		/* Utility table query */
 		stories, bedrooms, baths, rooms, 
 		/* Common table query */
@@ -103,6 +105,20 @@ LEFT JOIN
 -- 			ELSE NULL END) AS avg_story_height
 FROM Utility
 GROUP BY RE, building) AS room_query
+USING (RE, building)
+/* Site subquery */
+LEFT JOIN
+(SELECT RE,
+		building_num AS building,
+		TRIM(IFNULL(street_num,0)||' '||IFNULL(street_name,'')||' '||IFNULL(street_type,'')||' '||IFNULL(direction,'')||' '||IFNULL(unit,'')) AS site_address,
+		TRIM(city) AS site_city,
+		substr(zipcode,1,5) AS site_zipcode
+FROM 
+(SELECT RE
+FROM Parcel
+WHERE property_use = '0100')
+LEFT JOIN Site
+USING (RE))
 USING (RE, building)
 /* Character table query */
 LEFT JOIN
